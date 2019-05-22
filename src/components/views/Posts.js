@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 
+// import PostAdd from './PostAdd'
+
 // redux imports
 import { connect } from 'react-redux';
 import { deletePost, updatePost, addPost } from '../../redux/actions/postActions'
@@ -10,12 +12,13 @@ class Posts extends Component {
         super(props);
 
         this.state = {
-            add: true,
-            edit: false,
-            actions: true,
+            addForm: true,
+            editForm: false,
+            postsTable: true,
             posts: [],
             id: '',
-            title: ''
+            title: '',
+            message: ''
         }
 
 
@@ -26,14 +29,26 @@ class Posts extends Component {
     handleDeletePost = (id) => {
         console.log(id);
         this.props.deletePost(id)
+        const totalPosts = this.props.posts.length - 1
+        console.log(totalPosts)
+        if (totalPosts === 0){
+            this.setState({
+                message: "No posts"
+            })
+        }
+        // this.setState({
+        //     message: 'No posts'
+        // })
+        
     }
 
     // handle edit click
     handleEditPost = (id, title) => {
         console.log('edit button clicked on post ', id, title);
         this.setState({
-            add: false,
-            edit: true,
+            addForm: false,
+            editForm: true,
+            postsTable: false,
             id: id,
             title: title
         })
@@ -46,8 +61,23 @@ class Posts extends Component {
         e.preventDefault();
         const id = this.state.id;
         console.log(e.target.updatedPost.value, id);
-        const title = e.target.updatedPost.value;
-        this.props.updatePost(id, title);
+        const updatedPostTitle = e.target.updatedPost.value;
+        if (updatedPostTitle !== ''){
+            this.props.updatePost(id, updatedPostTitle);
+            console.log(updatedPostTitle)
+
+            this.setState({
+                addForm: true,
+                editForm: false,
+                postsTable: true,
+                message: ''
+            });
+        } else {
+            this.setState({
+                message: 'Please enter an update.'
+            })
+        }
+        
 
     }
 
@@ -55,13 +85,25 @@ class Posts extends Component {
     handleAddPost = (e) => { //passes in the event
         e.preventDefault();
         // console.log(e.target.post.value) //extract value from post object from the event
+        const newPostTitle = e.target.post.value;
         let idNum = Math.floor((Math.random() * 1000) + 9999); // generate random number for id
-        this.props.addPost(idNum, e.target.post.value);
+        if (newPostTitle !== '') { //do if data in list
+            this.props.addPost(idNum, e.target.post.value);
+            this.setState({
+                message: ''
+            })
+        } else { //do if data not in list
+            console.log(newPostTitle)
+            this.setState({
+                message: 'Please enter a post.'
+            })
+        }
+        e.target.post.value = ''; //reset input field
     }
 
     // render add form
     renderAddForm() {
-        if (this.state.add) {
+        if (this.state.addForm) {
             return <form onSubmit={this.handleAddPost}>
                 <div className="form-group">
                     <label className="" htmlFor="add-post">Add Item &nbsp;</label>
@@ -75,8 +117,8 @@ class Posts extends Component {
     // render edit form
     renderEditForm() {
         // console.log('edit form passed post ', id)
-        
-        if (this.state.edit) {
+
+        if (this.state.editForm) {
             // const id = this.state.id;
             // console.log(id);
             return <form onSubmit={this.handleUpdatePost}>
@@ -90,37 +132,47 @@ class Posts extends Component {
 
     // render posts table
     renderPostsTable() {
-        return (
-            <table className="table table-dark">
-                <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>title</th>
-                        <th>action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.props.posts.map(post =>
-                        <tr key={post.id}>
-                            <td>{post.id}</td>
-                            <td>{post.title}</td>
-                            <td><button className="btn btn-danger" onClick={() => this.handleDeletePost(post.id)}>Delete</button></td>&nbsp;
-                            <td><button className="btn btn-warning" onClick={() => this.handleEditPost(post.id, post.title)}>Edit</button></td>&nbsp;
+        if (this.state.postsTable) {
+            return (
+                <table className="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>title</th>
+                            <th>action</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
-        )
+                    </thead>
+                    <tbody>
+                        {this.props.posts.map(post =>
+                            <tr key={post.id}>
+                                <td>{post.id}</td>
+                                <td>{post.title}</td>
+                                <td><button className="btn btn-danger" onClick={() => this.handleDeletePost(post.id)}>Delete</button></td>&nbsp;
+                                <td><button className="btn btn-warning" onClick={() => this.handleEditPost(post.id, post.title)}>Edit</button></td>&nbsp;
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            )
+        }
     }
 
     // render component's main view
     render() {
+        
         console.log(this.props);
         return (
             <div className="container">
                 {this.renderAddForm()}
                 {this.renderEditForm()}
+                <div className="content">
+                {
+                    // (this.message !== '' || this.posts.length === 0) && <p className="message text-danger">{this.message}</p>
+                    console.log(this.props.posts)}
+                    {(this.state.message !== '' || this.props.posts.length === 0) && <p className="message text-danger">{this.state.message}</p>
+                }
                 {this.renderPostsTable()}
+                </div>
             </div>
         )
     }
